@@ -30,3 +30,4 @@ class Config:
         if missing:
             raise ValueError(f"Missing required variables: {missing}")
         return True
+ 
