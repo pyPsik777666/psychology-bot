@@ -1,4 +1,4 @@
 # personality/__init__.py
-from .core import MaximPersonality
 
+# Пустой файл или только определение __all__
 __all__ = ['MaximPersonality']
