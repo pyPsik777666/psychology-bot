@@ -18,6 +18,7 @@ class SimpleConfig:
         self.CHANNEL_ID = os.getenv('CHANNEL_ID')
         self.SUPABASE_URL = os.getenv('SUPABASE_URL')
         self.SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+        self.RENDER_EXTERNAL_URL = os.getenv('RENDER_EXTERNAL_URL', '')  # URL вашего сервиса на Render
     
     def validate_config(self):
         required = ['TELEGRAM_TOKEN', 'CHANNEL_ID', 'SUPABASE_URL', 'SUPABASE_KEY']
@@ -54,6 +55,7 @@ class SimplePsychologyBot:
         
         self.logger = logger
         self.logger.info(f"🤖 Бот {self.personality.name} инициализирован!")
+        self.application = None
     
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик команды /start"""
@@ -96,7 +98,13 @@ class SimplePsychologyBot:
         if update and update.message:
             await update.message.reply_text(error_response)
 
-def main():
+    def setup_handlers(self):
+        """Настройка обработчиков"""
+        self.application.add_handler(CommandHandler("start", self.start))
+        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+        self.application.add_error_handler(self.error_handler)
+
+async def main():
     """Точка входа"""
     try:
         logger.info("🤖 ЗАПУСК ПСИХОЛОГИЧЕСКОГО БОТА...")
@@ -115,17 +123,12 @@ def main():
         
         # Создаем приложение
         application = Application.builder().token(bot.config.TELEGRAM_TOKEN).build()
+        bot.application = application
+        bot.setup_handlers()
         
-        # Добавляем обработчики
-        application.add_handler(CommandHandler("start", bot.start))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot.handle_message))
-        
-        # Обработчик ошибок
-        application.add_error_handler(bot.error_handler)
-        
-        # Запускаем бота
-        logger.info("🚀 Бот запускается...")
-        application.run_polling()
+        # Запускаем бота в режиме polling
+        logger.info("🚀 Бот запускается в режиме polling...")
+        await application.run_polling()
         
     except Exception as e:
         logger.error(f"💥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
@@ -133,4 +136,5 @@ def main():
         logger.error(traceback.format_exc())
 
 if __name__ == "__main__":
-    main()
+    # Запускаем асинхронную main функцию
+    asyncio.run(main())
